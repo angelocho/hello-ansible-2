@@ -24,7 +24,6 @@
          tags:
            Environment: ansibleInstance
       register: ec2
-      delegate_to: localhost
 
     - name: Add new instance to host group
       add_host:
