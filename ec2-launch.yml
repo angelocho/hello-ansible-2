@@ -3,31 +3,32 @@
   hosts: localhost
   gather_facts: false
   vars:
-    keypair: ...
+    keypair: clave-lucatic
     instance_type: t2.micro
-    security_group: ...
-    subnet_id: ...
-    image: ...
-    region: ...
+    security_group: sg-0d2b1e710a2281426
+    subnet_id: subnet-0f79bf7d4bc65f63b
+    image: ami-0b752bf1df193a6c4
+    region: eu-west-1
   tasks:
     - name: Launch instance
-      ec2:
+      amazon.aws.ec2_instance:
          key_name: "{{ keypair }}"
-         group: "{{ security_group }}"
+         security_group: "{{ security_group }}"
          instance_type: "{{ instance_type }}"
-         image: "{{ image }}"
          wait: true
+         image_id: "{{ image }}"
          region: "{{ region }}"
          vpc_subnet_id: "{{ subnet_id }}"
-         assign_public_ip: yes
-         instance_tags:
-           Name: ansibleInstance
-           APP: vue2048
+         network:
+           assign_public_ip: true
+         tags:
+           Environment: ansibleInstance
       register: ec2
+      delegate_to: localhost
 
     - name: Add new instance to host group
       add_host:
-        hostname: "{{ item.public_ip }}"
+        hostname: "{{ item.public_ip_address }}"
         groupname: launched
       loop: "{{ ec2.instances }}"
 
@@ -48,3 +49,24 @@
   vars:
     ansible_user: ec2-user
   tasks:
+    - name: Install httpd
+      yum:
+        name: httpd
+        state: present
+        update_cache: yes
+    - name: Start httpd
+      ansible.builtin.service:
+        name: httpd
+        state: started
+    - name: Enable httpd
+      ansible.builtin.service:
+        name: httpd
+        enabled: yes
+    - name: Copy file with owner and permissions
+      ansible.builtin.copy:
+        src: /home/sinensia/hello-2048/public_html/
+        dest: /var/www/html/
+        owner: apache
+        group: apache
+        mode: '0644'
+        directory_mode: '0755'
