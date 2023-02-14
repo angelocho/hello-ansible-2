@@ -19,10 +19,13 @@
          image_id: "{{ image }}"
          region: "{{ region }}"
          vpc_subnet_id: "{{ subnet_id }}"
+         state: running
          network:
            assign_public_ip: true
+         count: 2
          tags:
-           Environment: ansibleInstance
+           Name: ansibleInstance
+           APP: vb2048
       register: ec2
 
     - name: Add new instance to host group
@@ -61,11 +64,3 @@
       ansible.builtin.service:
         name: httpd
         enabled: yes
-    - name: Copy file with owner and permissions
-      ansible.builtin.copy:
-        src: /home/sinensia/hello-2048/public_html/
-        dest: /var/www/html/
-        owner: apache
-        group: apache
-        mode: '0644'
-        directory_mode: '0755'
